@@ -2,22 +2,23 @@
 # Author: Remigijus Jarmalavičius <remigijus@jarmalavicius.lt> 
 # Author: Vytautas Povilaitis <php-checker@vytux.lt>
 
+# Colors
+RED_ECHO='\033[0;31m'
+GREEN_ECHO='\e[32m'
+WHITE_ECHO='\033[0m'
 ROOT_DIR="$(pwd)/"
-LIST=$(git status | grep -e '\#.*\(modified\|added\)')
+
+LIST=$(git diff --cached --name-status | grep -E '^(M|A)' | grep php$)
 ERRORS_BUFFER=""
 for file in $LIST
 do
-    if [ "$file" == '#' ]; then
-        continue
-    fi
-    if [ $(echo "$file" | grep 'modified') ]; then
+    if [ $(echo "$file" | grep 'M') ]; then
         FILE_ACTION="modified"
-    elif [ $(echo "$file" | grep 'added') ]; then
+    elif [ $(echo "$file" | grep 'A') ]; then
         FILE_ACTION="added"
     else 
-        EXTENSION=$(echo "$file" | grep ".php$")
+        EXTENSION=$file
         if [ "$EXTENSION" != "" ]; then
-            echo "Checking $FILE_ACTION file: $file" 
             ERRORS=$(php -l $ROOT_DIR$file 2>&1 | grep "Parse error")
             if [ "$ERRORS" != "" ]; then
                 if [ "$ERRORS_BUFFER" != "" ]; then
@@ -25,8 +26,10 @@ do
                 else
                     ERRORS_BUFFER="$ERRORS"
                 fi
-                echo "Syntax errors found in file: $file "
-            fi
+                echo -e $RED_ECHO"Syntax errors found in file: $file"$WHITE_ECHO
+	        else
+		        echo -e $GREEN_ECHO"Checked $FILE_ACTION file: $file"$WHITE_ECHO
+	        fi
         fi
     fi
 done
@@ -35,8 +38,8 @@ if [ "$ERRORS_BUFFER" != "" ]; then
     echo "These errors were found in try-to-commit files: "
     echo -e $ERRORS_BUFFER
     echo 
-    echo "Can't commit, fix errors first."
+    echo -e $RED_ECHO"Can't commit, fix errors first."$WHITE_ECHO
     exit 1
 else
-    echo "Commited successfully."
+    echo -e $GREEN_ECHO"Commited successfully."$WHITE_ECHO
 fi
