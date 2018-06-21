@@ -1,6 +1,4 @@
 #!/bin/bash
-# Author: Remigijus Jarmalavičius <remigijus@jarmalavicius.lt> 
-# Author: Vytautas Povilaitis <php-checker@vytux.lt>
 
 # Colors
 RED_ECHO='\033[0;31m'
@@ -12,13 +10,12 @@ LIST=$(git diff --cached --name-status | grep -E '^(M|A)' | grep php$)
 ERRORS_BUFFER=""
 for file in $LIST
 do
-    if [ $(echo "$file" | grep 'M') ]; then
+    if [ $(echo "$file" | grep '^M$') ]; then
         FILE_ACTION="modified"
-    elif [ $(echo "$file" | grep 'A') ]; then
+    elif [ $(echo "$file" | grep '^A$') ]; then
         FILE_ACTION="added"
-    else 
-        EXTENSION=$file
-        if [ "$EXTENSION" != "" ]; then
+    else
+        if [ "$file" != "" ]; then
             ERRORS=$(php -l $ROOT_DIR$file 2>&1 | grep "Parse error")
             if [ "$ERRORS" != "" ]; then
                 if [ "$ERRORS_BUFFER" != "" ]; then
@@ -27,9 +24,9 @@ do
                     ERRORS_BUFFER="$ERRORS"
                 fi
                 echo -e $RED_ECHO"Syntax errors found in file: $file"$WHITE_ECHO
-	        else
-		        echo -e $GREEN_ECHO"Checked $FILE_ACTION file: $file"$WHITE_ECHO
-	        fi
+	    else
+	        echo -e $GREEN_ECHO"Checked $FILE_ACTION file: $file"$WHITE_ECHO
+	    fi
         fi
     fi
 done
